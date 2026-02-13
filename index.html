@@ -133,7 +133,7 @@ function updateDashboard(){
 function updateButtons(){
   let active = user.premiumUntil && Date.now()<user.premiumUntil;
   document.querySelectorAll('.modalidad-btn').forEach(btn=>{
-    btn.classList.toggle('disabled',!active && btn.id!=='btnActivarPremium');
+    btn.classList.toggle('disabled',!active && btn.id!=='btnActivarPremium' && btn.id!=='btnPerfil');
   });
 }
 
@@ -226,6 +226,7 @@ setInterval(()=>{ if(user) updatePremiumTimer(); },1000);
 
 // ===== Modalidades =====
 function completarTarea(){ 
+  if(!user.premiumActive){ showNotification("❌ Activa Premium para usar esta función"); return; }
   user.xp+=10; 
   user.saldo+=1; 
   checkNivel(); 
@@ -245,6 +246,7 @@ function checkNivel(){
 }
 
 function jugarJackpot(){ 
+  if(!user.premiumActive){ showNotification("❌ Activa Premium para usar esta función"); return; }
   let premio=Math.floor(Math.random()*50+10); 
   user.saldo+=premio; 
   localStorage.setItem("userData", JSON.stringify(user)); 
@@ -253,6 +255,7 @@ function jugarJackpot(){
 }
 
 function activarMineria(){ 
+  if(!user.premiumActive){ showNotification("❌ Activa Premium para usar esta función"); return; }
   if(mineriaTimer) { showNotification("⏳ Minería ya activa"); return; }
   let tiempo=5*60;
   showNotification("⛏️ Minería iniciada: recibirás 0.50 USDT en 5 min");
@@ -314,4 +317,4 @@ function openModalidad(tipo){
 function backToDashboard(){ showView('dashboardView'); }
 </script>
 </body>
-      </html>
+</html>
