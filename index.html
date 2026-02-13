@@ -144,12 +144,13 @@ function openPanel(tipo){
   if(tipo==='premium'){
     content.innerHTML = `
       <h3>Activar Premium 24h</h3>
-      <p>Pago: 1.50 USDT</p>
-      <p>Wallet BEP20: 0x3670a0bffb8b8a6d42177807f8dfd369a3995b9e</p>
-      <p>Enviar comprobante a: reffgame.oficial@gmail.com</p>
-      <input type="text" id="premiumCodeInput" placeholder="Introduce tu hash de transferencia"/>
-      <input type="text" id="premiumKeyInput" placeholder="Introduce el código de activación"/>
-      <button onclick="sendPremiumWithCode()">Activar Premium</button>
+      <p>1️⃣ Paso 1: Envía tu hash de transferencia</p>
+      <input type="text" id="premiumHashInput" placeholder="Introduce tu hash de transferencia"/>
+      <button onclick="sendPremiumHash()">Enviar Hash</button>
+      <hr>
+      <p>2️⃣ Paso 2: Introduce el código recibido</p>
+      <input type="text" id="premiumCodeInput" placeholder="Introduce el código de activación"/>
+      <button onclick="activatePremiumWithCode()">Activar Premium</button>
     `;
   } else if(tipo==='retiro'){
     content.innerHTML = `
@@ -168,23 +169,29 @@ function closeSlidePanel(){
   document.getElementById('slidePanel').classList.add('hidden');
 }
 
-// ===== Premium con código =====
-function sendPremiumWithCode(){
-  let hash = document.getElementById("premiumCodeInput").value.trim();
-  let code = document.getElementById("premiumKeyInput").value.trim();
+// ===== Enviar hash (Paso 1) =====
+function sendPremiumHash(){
+  let hash = document.getElementById("premiumHashInput").value.trim();
   if(!hash){ showNotification("❌ Debes escribir tu hash de transferencia"); return; }
+  let mailtoLink = `mailto:reffgame.oficial@gmail.com?subject=Comprobante Premium REFFGAME&body=Hola,%0A%0AHe realizado el pago de 1.50 USDT.%0AHash de transferencia: ${hash}%0A%0AGracias.`;
+  window.location.href = mailtoLink;
+  showNotification("✅ Hash enviado. Ahora espera recibir el código de activación");
+}
+
+// ===== Activar con código (Paso 2) =====
+function activatePremiumWithCode(){
+  let code = document.getElementById("premiumCodeInput").value.trim();
   if(!code){ showNotification("❌ Debes escribir el código de activación"); return; }
   if(!validCodes.includes(code)){ showNotification("❌ Código incorrecto, inténtelo de nuevo"); return; }
 
-  let mailtoLink = `mailto:reffgame.oficial@gmail.com?subject=Comprobante Premium REFFGAME&body=Hola,%0A%0AHe realizado el pago de 1.50 USDT.%0AHash de transferencia: ${hash}%0A%0AGracias.`;
-  window.location.href = mailtoLink;
-
+  // Guardar premium activo 24h en localStorage
   user.premiumUntil = Date.now() + 24*60*60*1000;
   user.premiumActive = true;
   localStorage.setItem("userData", JSON.stringify(user));
+
   updateDashboard();
   closeSlidePanel();
-  showNotification("🎉 Modalidades desbloqueadas. Premium activo 24h 🚀");
+  showNotification("🎉 Premium activado por 24h 🚀");
 }
 
 // ===== Retiro deslizante =====
@@ -227,4 +234,4 @@ function activarMineria(){ let ingreso=Math.floor(Math.random()*5+1); user.saldo
 
 </script>
 </body>
-</html>
+  </html>
