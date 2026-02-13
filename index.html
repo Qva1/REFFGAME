@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REFFGAME</title>
+<style>
+  body { margin:0; font-family: Arial, sans-serif; background: #0f172a; color: #fff; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
+  .hidden { display:none; }
+  .container { width:90%; max-width:500px; text-align:center; }
+  input, button { margin:10px 0; padding:10px; border-radius:8px; border:none; font-size:16px; }
+  input { width:80%; }
+  button { cursor:pointer; background:#00c896; color:#fff; font-weight:bold; transition:0.3s; }
+  button:hover { background:#008cff; }
+  .circle { position:relative; width:250px; height:250px; border-radius:50%; background:linear-gradient(135deg,#1e293b,#0b0d12); margin:0 auto; display:flex; flex-direction:column; justify-content:center; align-items:center; box-shadow:0 0 20px rgba(0,200,150,0.5); }
+  .circle .saldo { font-size:32px; font-weight:bold; }
+  .circle .info { font-size:12px; }
+  .modalidad-btn { display:block; width:80%; margin:5px auto; padding:10px; border-radius:8px; background:#151823; color:#fff; font-weight:bold; }
+  .modalidad-btn.disabled { background:#333; cursor:not-allowed; }
+  .notification { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#00c896,#008cff); color:#fff; padding:15px 25px; border-radius:12px; font-weight:bold; box-shadow:0 10px 25px rgba(0,0,0,0.3); z-index:9999; transition:opacity 0.5s; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Registro -->
+<div id="registerView">
+  <h2>Registro</h2>
+  <input type="text" id="regUsername" placeholder="Usuario"/>
+  <input type="password" id="regPassword" placeholder="Contraseña"/>
+  <button onclick="registerUser()">Registrar</button>
+  <p>¿Ya tienes cuenta? <span style="text-decoration:underline; cursor:pointer;" onclick="showView('loginView')">Iniciar sesión</span></p>
+</div>
+
+<!-- Login -->
+<div id="loginView" class="hidden">
+  <h2>Login</h2>
+  <input type="text" id="loginUsername" placeholder="Usuario"/>
+  <input type="password" id="loginPassword" placeholder="Contraseña"/>
+  <button onclick="loginUser()">Iniciar Sesión</button>
+  <p>¿No tienes cuenta? <span style="text-decoration:underline; cursor:pointer;" onclick="showView('registerView')">Registrarse</span></p>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboardView" class="hidden">
+  <h2>REFFGAME</h2>
+  <div class="circle">
+    <div class="saldo" id="circleSaldo">0 USDT</div>
+    <div class="info" id="circleInfo">Nivel 1 | XP 0</div>
+    <div class="info" id="premiumTimer">Premium: 0h 0m 0s</div>
+  </div>
+  <button class="modalidad-btn" id="btnTareas" onclick="openModalidad('Tareas')">Tareas</button>
+  <button class="modalidad-btn" id="btnJackpot" onclick="openModalidad('Jackpot')">Jackpot</button>
+  <button class="modalidad-btn" id="btnMineria" onclick="openModalidad('Mineria')">Minería</button>
+  <button class="modalidad-btn" id="btnPerfil" onclick="openModalidad('Perfil')">Perfil</button>
+</div>
+
+<!-- Modalidad general -->
+<div id="modalidadView" class="hidden">
+  <h2 id="modalidadTitle">Modalidad</h2>
+  <div id="modalidadContent"></div>
+  <button onclick="backToDashboard()">Volver</button>
+</div>
+
+<!-- Activación premium -->
+<div id="premiumView" class="hidden">
+  <h2>Activar Premium 24h</h2>
+  <p>Pago: 1.50 USDT</p>
+  <p>Wallet BEP20: 0x3670a0bffb8b8a6d42177807f8dfd369a3995b9e</p>
+  <p>Enviar comprobante a: reffgame.oficial@gmail.com</p>
+  <input type="text" id="premiumCode" placeholder="Introduce tu código"/>
+  <button onclick="validatePremiumCode()">Activar 24H</button>
+</div>
+
+</div>
+
+<script>
+// ===== Usuario y localStorage =====
+let user = JSON.parse(localStorage.getItem("userData")) || null;
+let usedCodes = JSON.parse(localStorage.getItem("usedCodes")) || [];
+const validCodes = ["RG24-AX91KQ","RG24-ZT82LM","RG24-QP73XD","RG24-NV44TR","RG24-LM93WX","RG24-BK52RT","RG24-XC84PL","RG24-WE39ZM","RG24-TY72KP","RG24-UV65QR","RG24-JK98LM","RG24-HG32ZX","RG24-PO77TY","RG24-MN41LK","RG24-DF62QP","RG24-AS55WX","RG24-ER88PL","RG24-CV29NM","RG24-BN14TR","RG24-KL93QP","RG24-ZX58LM","RG24-XD66TR","RG24-TR45NM","RG24-YU82PL","RG24-OP39ZX","RG24-QW71TR","RG24-RF53LM","RG24-GH90PL","RG24-PL42NM","RG24-LK67TR","RG24-MJ81ZX","RG24-VB73QP","RG24-CX25LM","RG24-NM64TR","RG24-ZP92PL","RG24-RT38NM","RG24-YK55TR","RG24-WS21ZX","RG24-ED74PL","RG24-FG89NM","RG24-HJ36TR","RG24-KL47ZX","RG24-IO63PL","RG24-UI52NM","RG24-PO78TR","RG24-LL84ZX","RG24-QA91PL","RG24-SD27NM","RG24-ZM43TR","RG24-XR66PL"];
+
+// ===== Mostrar vista =====
+function showView(viewId){
+  document.querySelectorAll('.container > div').forEach(d=>d.classList.add('hidden'));
+  document.getElementById(viewId).classList.remove('hidden');
+}
+
+// ===== Registro =====
+function registerUser(){
+  let u = document.getElementById("regUsername").value.trim();
+  let p = document.getElementById("regPassword").value.trim();
+  if(!u||!p){ showNotification("❌ Completa todos los campos"); return; }
+  if(localStorage.getItem("users_"+u)){ showNotification("❌ Usuario ya existe"); return; }
+  let newUser = { username:u, password:p, saldo:0, nivel:1, xp:0, premiumUntil:0, premiumActive:false };
+  localStorage.setItem("users_"+u, JSON.stringify(newUser));
+  showNotification("✅ Registro exitoso, inicia sesión");
+  showView('loginView');
+}
+
+// ===== Login =====
+function loginUser(){
+  let u = document.getElementById("loginUsername").value.trim();
+  let p = document.getElementById("loginPassword").value.trim();
+  let stored = JSON.parse(localStorage.getItem("users_"+u));
+  if(!stored){ showNotification("❌ Usuario no encontrado"); return; }
+  if(stored.password!==p){ showNotification("❌ Contraseña incorrecta"); return; }
+  user = stored;
+  localStorage.setItem("userData", JSON.stringify(user));
+  showView('dashboardView');
+  updateDashboard();
+}
+
+// ===== Notificación =====
+function showNotification(msg){
+  let n = document.createElement('div'); n.className='notification'; n.innerText=msg;
+  document.body.appendChild(n);
+  setTimeout(()=>{ n.style.opacity=0; }, 4500);
+  setTimeout(()=>{ document.body.removeChild(n); }, 5000);
+}
+
+// ===== Dashboard =====
+function updateDashboard(){
+  if(!user) return;
+  document.getElementById("circleSaldo").innerText=user.saldo+" USDT";
+  document.getElementById("circleInfo").innerText="Nivel "+user.nivel+" | XP "+user.xp;
+  updatePremiumTimer();
+  updateButtons();
+}
+
+// ===== Botones =====
+function updateButtons(){
+  let active = user.premiumUntil && Date.now()<user.premiumUntil;
+  document.querySelectorAll('.modalidad-btn').forEach(btn=>{
+    btn.classList.toggle('disabled',!active);
+  });
+}
+
+// ===== Modalidades =====
+function openModalidad(name){
+  if(!user.premiumUntil || Date.now()>user.premiumUntil){ showNotification("❌ Acceso bloqueado, activa premium"); return; }
+  showView('modalidadView');
+  document.getElementById("modalidadTitle").innerText=name;
+  let c = document.getElementById("modalidadContent");
+  c.innerHTML="";
+  if(name=="Tareas"){ c.innerHTML='<p>Completa tareas para ganar XP y saldo</p><button onclick="completarTarea()">Completar Tarea</button>'; }
+  if(name=="Jackpot"){ c.innerHTML='<p>Intenta ganar el Jackpot!</p><button onclick="jugarJackpot()">Jugar Jackpot</button>'; }
+  if(name=="Mineria"){ c.innerHTML='<p>Minería activa genera saldo pasivo</p><button onclick="activarMineria()">Activar Minería</button>'; }
+  if(name=="Perfil"){ c.innerHTML='<p>Usuario: '+user.username+'</p><p>Saldo: '+user.saldo+' USDT</p><p>Nivel: '+user.nivel+'</p><p>XP: '+user.xp+'</p><p>Premium hasta: '+new Date(user.premiumUntil).toLocaleString()+'</p>'; }
+}
+
+// ===== Volver =====
+function backToDashboard(){ showView('dashboardView'); updateDashboard(); }
+
+// ===== Activar Premium =====
+function validatePremiumCode(){
+  let c = document.getElementById("premiumCode").value.trim();
+  if(validCodes.includes(c) && !usedCodes.includes(c)){
+    user.premiumUntil = Date.now() + 24*60*60*1000;
+    user.premiumActive = true;
+    usedCodes.push(c);
+    localStorage.setItem("userData", JSON.stringify(user));
+    localStorage.setItem("usedCodes", JSON.stringify(usedCodes));
+    showNotification("🎉 Modalidades desbloqueadas. Ya puedes comenzar a generar ingresos. Mucho éxito 🚀");
+    updateDashboard();
+  } else { showNotification("❌ Código inválido o ya usado"); }
+}
+
+// ===== Contador Premium =====
+function updatePremiumTimer(){
+  if(!user.premiumUntil) return;
+  let remaining = user.premiumUntil - Date.now();
+  if(remaining<=0){ user.premiumActive=false; localStorage.setItem("userData", JSON.stringify(user)); updateButtons(); remaining=0; }
+  let h = Math.floor(remaining/3600000);
+  let m = Math.floor((remaining%3600000)/60000);
+  let s = Math.floor((remaining%60000)/1000);
+  document.getElementById("premiumTimer").innerText="Premium: "+h+"h "+m+"m "+s+"s";
+}
+setInterval(()=>{ if(user) updatePremiumTimer(); },1000);
+
+// ===== Funciones de Modalidades =====
+function completarTarea(){ user.xp+=10; user.saldo+=1; checkNivel(); localStorage.setItem("userData", JSON.stringify(user)); updateDashboard(); showNotification("✅ Tarea completada: +1 USDT, +10 XP"); }
+function checkNivel(){ if(user.xp>=user.nivel*50){ user.nivel++; user.xp=0; showNotification("🎉 Subiste al nivel "+user.nivel); } }
+function jugarJackpot(){ let premio=Math.floor(Math.random()*50+10); user.saldo+=premio; localStorage.setItem("userData", JSON.stringify(user)); updateDashboard(); showNotification("💰 Ganaste "+premio+" USDT en Jackpot!"); }
+function activarMineria(){ let ingreso=Math.floor(Math.random()*5+1); user.saldo+=ingreso; user.xp+=5; localStorage.setItem("userData", JSON.stringify(user)); updateDashboard(); showNotification("⛏️ Minería activa: +"+ingreso+" USDT, +5 XP"); }
+
+</script>
+</body>
+</html>
