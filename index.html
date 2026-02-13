@@ -5,22 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>REFFGAME</title>
 <style>
-  body { margin:0; font-family: Arial, sans-serif; background: #0f172a; color: #fff; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
-  .hidden { display:none; }
-  .container { width:90%; max-width:500px; text-align:center; }
-  input, button { margin:10px 0; padding:10px; border-radius:8px; border:none; font-size:16px; }
-  input { width:80%; }
-  button { cursor:pointer; background:#00c896; color:#fff; font-weight:bold; transition:0.3s; }
-  button:hover { background:#008cff; }
-  .circle { position:relative; width:250px; height:250px; border-radius:50%; background:linear-gradient(135deg,#1e293b,#0b0d12); margin:0 auto; display:flex; flex-direction:column; justify-content:center; align-items:center; box-shadow:0 0 20px rgba(0,200,150,0.5); }
-  .circle .saldo { font-size:32px; font-weight:bold; }
-  .circle .info { font-size:12px; }
-  .modalidad-btn { display:block; width:80%; margin:5px auto; padding:10px; border-radius:8px; background:#151823; color:#fff; font-weight:bold; }
-  .modalidad-btn.disabled { background:#333; cursor:not-allowed; }
-  .notification { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#00c896,#008cff); color:#fff; padding:15px 25px; border-radius:12px; font-weight:bold; box-shadow:0 10px 25px rgba(0,0,0,0.3); z-index:9999; transition:opacity 0.5s; }
-  #slidePanel { position:fixed; bottom:0; left:0; width:100%; max-width:500px; background:#1e293b; padding:15px; border-top-left-radius:12px; border-top-right-radius:12px; box-shadow:0 -5px 25px rgba(0,0,0,0.5); text-align:center; }
-  #slidePanel input { width:80%; margin:5px 0; padding:10px; border-radius:8px; border:none; font-size:16px; }
-  #slidePanel button { margin-top:10px; }
+body { margin:0; font-family: Arial, sans-serif; background: #0f172a; color: #fff; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
+.hidden { display:none; }
+.container { width:90%; max-width:500px; text-align:center; }
+input, button { margin:10px 0; padding:10px; border-radius:8px; border:none; font-size:16px; }
+input { width:80%; }
+button { cursor:pointer; background:#00c896; color:#fff; font-weight:bold; transition:0.3s; }
+button:hover { background:#008cff; }
+.circle { position:relative; width:250px; height:250px; border-radius:50%; background:linear-gradient(135deg,#1e293b,#0b0d12); margin:0 auto; display:flex; flex-direction:column; justify-content:center; align-items:center; box-shadow:0 0 20px rgba(0,200,150,0.5); }
+.circle .saldo { font-size:32px; font-weight:bold; }
+.circle .info { font-size:12px; }
+.modalidad-btn { display:block; width:80%; margin:5px auto; padding:10px; border-radius:8px; background:#151823; color:#fff; font-weight:bold; }
+.modalidad-btn.disabled { background:#333; cursor:not-allowed; }
+.notification { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#00c896,#008cff); color:#fff; padding:15px 25px; border-radius:12px; font-weight:bold; box-shadow:0 10px 25px rgba(0,0,0,0.3); z-index:9999; transition:opacity 0.5s; }
+#slidePanel { position:fixed; bottom:0; left:0; width:100%; max-width:500px; background:#1e293b; padding:15px; border-top-left-radius:12px; border-top-right-radius:12px; box-shadow:0 -5px 25px rgba(0,0,0,0.5); text-align:center; }
+#slidePanel input { width:80%; margin:5px 0; padding:10px; border-radius:8px; border:none; font-size:16px; }
+#slidePanel button { margin-top:10px; }
 </style>
 </head>
 <body>
@@ -74,9 +74,9 @@
 </div>
 
 <script>
-// ===== Usuario y localStorage =====
 let user = JSON.parse(localStorage.getItem("userData")) || null;
 const validCodes = ["RG24-AX91KQ","RG24-ZT82LM","RG24-QP73XD","RG24-NV44TR","RG24-LM93WX","RG24-BK52RT","RG24-XC84PL","RG24-WE39ZM","RG24-TY72KP","RG24-UV65QR"];
+let mineriaTimer = null;
 
 // ===== Mostrar vista =====
 function showView(viewId){
@@ -110,9 +110,7 @@ function loginUser(){
 }
 
 // ===== Generar código de referido =====
-function generateRefCode(){
-  return Math.floor(1000 + Math.random()*9000).toString();
-}
+function generateRefCode(){ return Math.floor(1000 + Math.random()*9000).toString(); }
 
 // ===== Notificación =====
 function showNotification(msg){
@@ -167,13 +165,9 @@ function openPanel(tipo){
   }
   panel.classList.remove('hidden');
 }
+function closeSlidePanel(){ document.getElementById('slidePanel').classList.add('hidden'); }
 
-// ===== Cerrar panel =====
-function closeSlidePanel(){
-  document.getElementById('slidePanel').classList.add('hidden');
-}
-
-// ===== Enviar Hash por correo =====
+// ===== Enviar Hash =====
 function enviarHashCorreo(){
   let hash = document.getElementById("premiumHashInput").value.trim();
   if(!hash){ showNotification("❌ Debes escribir tu hash de transferencia"); return; }
@@ -187,7 +181,6 @@ function validarCodigoPremium(){
   let code = document.getElementById("premiumKeyInput").value.trim();
   if(!code){ showNotification("❌ Debes escribir el código de activación"); return; }
   if(!validCodes.includes(code)){ showNotification("❌ Código incorrecto"); return; }
-
   user.premiumUntil = Date.now() + 24*60*60*1000;
   user.premiumActive = true;
   localStorage.setItem("userData", JSON.stringify(user));
@@ -196,7 +189,7 @@ function validarCodigoPremium(){
   showNotification("🎉 Premium activado 24h 🚀");
 }
 
-// ===== Retiro deslizante =====
+// ===== Retiro =====
 function procesarRetiroSlide(){
   let direccion = document.getElementById("retiroDireccionSlide").value.trim();
   let cantidad = parseFloat(document.getElementById("retiroCantidadSlide").value.trim());
@@ -204,19 +197,16 @@ function procesarRetiroSlide(){
   if(isNaN(cantidad) || cantidad <=0){ showNotification("❌ Ingresa una cantidad válida"); return; }
   if(cantidad < 2.50){ showNotification("❌ El retiro mínimo es 2.50 USDT"); return; }
   if(cantidad > user.saldo){ showNotification("❌ No tienes saldo suficiente"); return; }
-
   user.saldo -= cantidad;
   localStorage.setItem("userData", JSON.stringify(user));
   updateDashboard();
   closeSlidePanel();
-
   let mailtoLink = `mailto:reffgame.oficial@gmail.com?subject=Retiro USDT REFFGAME&body=Hola,%0A%0ADeseo retirar ${cantidad.toFixed(2)} USDT.%0ADirección USDT: ${direccion}%0A%0AGracias.`;
   window.location.href = mailtoLink;
-
   showNotification(`✅ Solicitud de retiro de ${cantidad.toFixed(2)} USDT enviada`);
 }
 
-// ===== Contador Premium con persistencia =====
+// ===== Premium timer =====
 function updatePremiumTimer(){
   if(!user.premiumUntil){ document.getElementById("premiumTimer").innerText="Premium: 0h 0m 0s"; return; }
   let remaining = user.premiumUntil - Date.now();
@@ -234,17 +224,14 @@ function updatePremiumTimer(){
 }
 setInterval(()=>{ if(user) updatePremiumTimer(); },1000);
 
-// ===== Funciones de Modalidades =====
+// ===== Modalidades =====
 function completarTarea(){ 
-  // Ganancia base
   user.xp+=10; 
   user.saldo+=1; 
   checkNivel(); 
   localStorage.setItem("userData", JSON.stringify(user)); 
   updateDashboard(); 
-  // Mostrar notificación
   showNotification("✅ Tarea completada: +1 USDT, +10 XP"); 
-  // Generar código de referido
   let enlace = `${location.href}?ref=${user.refCode}`;
   showNotification(`🔗 Tu código de referido: ${user.refCode}. Comparte tu enlace: ${enlace}`);
 }
@@ -266,44 +253,65 @@ function jugarJackpot(){
 }
 
 function activarMineria(){ 
-  let ingreso=Math.floor(Math.random()*5+1); 
-  user.saldo+=ingreso; 
-  user.xp+=5; 
-  localStorage.setItem("userData", JSON.stringify(user)); 
-  updateDashboard(); 
-  showNotification("⛏️ Minería activa: +"+ingreso+" USDT, +5 XP"); 
+  if(mineriaTimer) { showNotification("⏳ Minería ya activa"); return; }
+  let tiempo=5*60;
+  showNotification("⛏️ Minería iniciada: recibirás 0.50 USDT en 5 min");
+  mineriaTimer=setInterval(()=>{
+    tiempo--;
+    if(tiempo<=0){
+      user.saldo+=0.5;
+      user.xp+=5;
+      localStorage.setItem("userData", JSON.stringify(user));
+      updateDashboard();
+      showNotification("⛏️ Minería completada: +0.50 USDT, +5 XP");
+      clearInterval(mineriaTimer);
+      mineriaTimer=null;
+    }
+  },1000);
 }
 
-// ===== Abrir modalidades =====
 function openModalidad(tipo){
   showView('modalidadView');
   document.getElementById('modalidadTitle').innerText = tipo;
   const content = document.getElementById('modalidadContent');
-  content.innerHTML = ''; // limpiar contenido anterior
+  content.innerHTML = '';
 
   if(tipo === 'Tareas'){
-    content.innerHTML = `<p>Completa tareas para ganar USDT y XP</p>
-                         <button onclick="completarTarea()">Completar Tarea</button>`;
+    content.innerHTML = `
+      <p>Completa tareas para ganar USDT y XP</p>
+      <ul style="text-align:left; margin:10px 0;">
+        <li>💼 Completar un formulario</li>
+        <li>📢 Compartir tu código de referido</li>
+        <li>📝 Escribir una reseña del juego</li>
+        <li>🎯 Alcanzar 10 tareas completadas</li>
+      </ul>
+      <button onclick="completarTarea()">Completar Tarea</button>
+    `;
   } else if(tipo === 'Jackpot'){
-    content.innerHTML = `<p>Prueba tu suerte en el Jackpot</p>
-                         <button onclick="jugarJackpot()">Jugar Jackpot</button>`;
+    content.innerHTML = `
+      <p>Prueba tu suerte en el Jackpot</p>
+      <p>🎰 Cada jugada puede generar entre 10 y 60 USDT</p>
+      <button onclick="jugarJackpot()">Jugar Jackpot</button>
+    `;
   } else if(tipo === 'Mineria'){
-    content.innerHTML = `<p>Activa minería para generar USDT automáticamente</p>
-                         <button onclick="activarMineria()">Activar Minería</button>`;
+    content.innerHTML = `
+      <p>Activa minería para generar USDT automáticamente</p>
+      <p>⏳ Cada 5 minutos recibirás 0.50 USDT y +5 XP</p>
+      <button onclick="activarMineria()">Activar Minería</button>
+    `;
   } else if(tipo === 'Perfil'){
-    content.innerHTML = `<p>Usuario: ${user.username}</p>
-                         <p>Saldo: ${user.saldo.toFixed(2)} USDT</p>
-                         <p>Nivel: ${user.nivel} | XP: ${user.xp}</p>
-                         <p>Premium activo: ${user.premiumActive ? 'Sí' : 'No'}</p>
-                         <p>Código de referido: ${user.refCode}</p>
-                         <p>Comparte tu enlace: <span style="color:#00c896">${location.href}?ref=${user.refCode}</span></p>`;
+    content.innerHTML = `
+      <p>Usuario: ${user.username}</p>
+      <p>Saldo: ${user.saldo.toFixed(2)} USDT</p>
+      <p>Nivel: ${user.nivel} | XP: ${user.xp}</p>
+      <p>Premium activo: ${user.premiumActive ? 'Sí' : 'No'}</p>
+      <p>Código de referido: ${user.refCode}</p>
+      <p>Comparte tu enlace: <span style="color:#00c896">${location.href}?ref=${user.refCode}</span></p>
+    `;
   }
 }
 
-// ===== Volver al dashboard =====
-function backToDashboard(){
-  showView('dashboardView');
-}
+function backToDashboard(){ showView('dashboardView'); }
 </script>
 </body>
-    </html>
+      </html>
