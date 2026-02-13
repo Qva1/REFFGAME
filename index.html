@@ -18,6 +18,8 @@
   .modalidad-btn { display:block; width:80%; margin:5px auto; padding:10px; border-radius:8px; background:#151823; color:#fff; font-weight:bold; }
   .modalidad-btn.disabled { background:#333; cursor:not-allowed; }
   .notification { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#00c896,#008cff); color:#fff; padding:15px 25px; border-radius:12px; font-weight:bold; box-shadow:0 10px 25px rgba(0,0,0,0.3); z-index:9999; transition:opacity 0.5s; }
+  #premiumPanel { background:#151823; padding:15px; border-radius:12px; margin:10px 0; text-align:left; }
+  #premiumPanel input { width:90%; }
 </style>
 </head>
 <body>
@@ -53,6 +55,7 @@
   <button class="modalidad-btn" id="btnJackpot" onclick="openModalidad('Jackpot')">Jackpot</button>
   <button class="modalidad-btn" id="btnMineria" onclick="openModalidad('Mineria')">Minería</button>
   <button class="modalidad-btn" id="btnPerfil" onclick="openModalidad('Perfil')">Perfil</button>
+  <button class="modalidad-btn" id="btnActivarPremium" onclick="showPremiumPanel()">Activar Premium</button>
 </div>
 
 <!-- Modalidad general -->
@@ -62,14 +65,15 @@
   <button onclick="backToDashboard()">Volver</button>
 </div>
 
-<!-- Activación premium -->
-<div id="premiumView" class="hidden">
-  <h2>Activar Premium 24h</h2>
+<!-- Panel Premium -->
+<div id="premiumPanel" class="hidden">
+  <h3>Activar Premium 24h</h3>
   <p>Pago: 1.50 USDT</p>
   <p>Wallet BEP20: 0x3670a0bffb8b8a6d42177807f8dfd369a3995b9e</p>
   <p>Enviar comprobante a: reffgame.oficial@gmail.com</p>
-  <input type="text" id="premiumCode" placeholder="Introduce tu código"/>
-  <button onclick="validatePremiumCode()">Activar 24H</button>
+  <input type="text" id="premiumCode" placeholder="Introduce tu hash de transferencia"/>
+  <button onclick="sendPremiumEmail()">Enviar Hash y Activar</button>
+  <button onclick="closePremiumPanel()">Cancelar</button>
 </div>
 
 </div>
@@ -152,18 +156,24 @@ function openModalidad(name){
 // ===== Volver =====
 function backToDashboard(){ showView('dashboardView'); updateDashboard(); }
 
-// ===== Activar Premium =====
-function validatePremiumCode(){
-  let c = document.getElementById("premiumCode").value.trim();
-  if(validCodes.includes(c) && !usedCodes.includes(c)){
-    user.premiumUntil = Date.now() + 24*60*60*1000;
-    user.premiumActive = true;
-    usedCodes.push(c);
-    localStorage.setItem("userData", JSON.stringify(user));
-    localStorage.setItem("usedCodes", JSON.stringify(usedCodes));
-    showNotification("🎉 Modalidades desbloqueadas. Ya puedes comenzar a generar ingresos. Mucho éxito 🚀");
-    updateDashboard();
-  } else { showNotification("❌ Código inválido o ya usado"); }
+// ===== Panel Premium =====
+function showPremiumPanel(){ document.getElementById('premiumPanel').classList.remove('hidden'); }
+function closePremiumPanel(){ document.getElementById('premiumPanel').classList.add('hidden'); }
+
+// ===== Enviar hash premium =====
+function sendPremiumEmail(){
+  let hash = document.getElementById("premiumCode").value.trim();
+  if(!hash){ showNotification("❌ Debes escribir tu hash de transferencia"); return; }
+  // Abrir correo prellenado con hash
+  let mailtoLink = `mailto:reffgame.oficial@gmail.com?subject=Comprobante Premium REFFGAME&body=Hola,%0A%0AHe realizado el pago de 1.50 USDT.%0AHash de transferencia: ${hash}%0A%0AGracias.`;
+  window.location.href = mailtoLink;
+  // Activar premium localmente
+  user.premiumUntil = Date.now() + 24*60*60*1000;
+  user.premiumActive = true;
+  localStorage.setItem("userData", JSON.stringify(user));
+  updateDashboard();
+  closePremiumPanel();
+  showNotification("🎉 Modalidades desbloqueadas. Premium activo 24h 🚀");
 }
 
 // ===== Contador Premium =====
