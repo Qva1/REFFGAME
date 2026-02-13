@@ -90,7 +90,7 @@ function registerUser(){
   let p = document.getElementById("regPassword").value.trim();
   if(!u||!p){ showNotification("❌ Completa todos los campos"); return; }
   if(localStorage.getItem("users_"+u)){ showNotification("❌ Usuario ya existe"); return; }
-  let newUser = { username:u, password:p, saldo:0, nivel:1, xp:0, premiumUntil:0, premiumActive:false };
+  let newUser = { username:u, password:p, saldo:0, nivel:1, xp:0, premiumUntil:0, premiumActive:false, refCode:generateRefCode() };
   localStorage.setItem("users_"+u, JSON.stringify(newUser));
   showNotification("✅ Registro exitoso, inicia sesión");
   showView('loginView');
@@ -109,6 +109,11 @@ function loginUser(){
   updateDashboard();
 }
 
+// ===== Generar código de referido =====
+function generateRefCode(){
+  return Math.floor(1000 + Math.random()*9000).toString();
+}
+
 // ===== Notificación =====
 function showNotification(msg){
   let n = document.createElement('div'); n.className='notification'; n.innerText=msg;
@@ -120,7 +125,7 @@ function showNotification(msg){
 // ===== Dashboard =====
 function updateDashboard(){
   if(!user) return;
-  document.getElementById("circleSaldo").innerText=user.saldo+" USDT";
+  document.getElementById("circleSaldo").innerText=user.saldo.toFixed(2)+" USDT";
   document.getElementById("circleInfo").innerText="Nivel "+user.nivel+" | XP "+user.xp;
   updatePremiumTimer();
   updateButtons();
@@ -230,10 +235,44 @@ function updatePremiumTimer(){
 setInterval(()=>{ if(user) updatePremiumTimer(); },1000);
 
 // ===== Funciones de Modalidades =====
-function completarTarea(){ user.xp+=10; user.saldo+=1; checkNivel(); localStorage.setItem("userData", JSON.stringify(user)); updateDashboard(); showNotification("✅ Tarea completada: +1 USDT, +10 XP"); }
-function checkNivel(){ if(user.xp>=user.nivel*50){ user.nivel++; user.xp=0; showNotification("🎉 Subiste al nivel "+user.nivel); } }
-function jugarJackpot(){ let premio=Math.floor(Math.random()*50+10); user.saldo+=premio; localStorage.setItem("userData", JSON.stringify(user)); updateDashboard(); showNotification("💰 Ganaste "+premio+" USDT en Jackpot!"); }
-function activarMineria(){ let ingreso=Math.floor(Math.random()*5+1); user.saldo+=ingreso; user.xp+=5; localStorage.setItem("userData", JSON.stringify(user)); updateDashboard(); showNotification("⛏️ Minería activa: +"+ingreso+" USDT, +5 XP"); }
+function completarTarea(){ 
+  // Ganancia base
+  user.xp+=10; 
+  user.saldo+=1; 
+  checkNivel(); 
+  localStorage.setItem("userData", JSON.stringify(user)); 
+  updateDashboard(); 
+  // Mostrar notificación
+  showNotification("✅ Tarea completada: +1 USDT, +10 XP"); 
+  // Generar código de referido
+  let enlace = `${location.href}?ref=${user.refCode}`;
+  showNotification(`🔗 Tu código de referido: ${user.refCode}. Comparte tu enlace: ${enlace}`);
+}
+
+function checkNivel(){ 
+  if(user.xp>=user.nivel*50){ 
+    user.nivel++; 
+    user.xp=0; 
+    showNotification("🎉 Subiste al nivel "+user.nivel); 
+  } 
+}
+
+function jugarJackpot(){ 
+  let premio=Math.floor(Math.random()*50+10); 
+  user.saldo+=premio; 
+  localStorage.setItem("userData", JSON.stringify(user)); 
+  updateDashboard(); 
+  showNotification("💰 Ganaste "+premio+" USDT en Jackpot!"); 
+}
+
+function activarMineria(){ 
+  let ingreso=Math.floor(Math.random()*5+1); 
+  user.saldo+=ingreso; 
+  user.xp+=5; 
+  localStorage.setItem("userData", JSON.stringify(user)); 
+  updateDashboard(); 
+  showNotification("⛏️ Minería activa: +"+ingreso+" USDT, +5 XP"); 
+}
 
 // ===== Abrir modalidades =====
 function openModalidad(tipo){
@@ -255,7 +294,9 @@ function openModalidad(tipo){
     content.innerHTML = `<p>Usuario: ${user.username}</p>
                          <p>Saldo: ${user.saldo.toFixed(2)} USDT</p>
                          <p>Nivel: ${user.nivel} | XP: ${user.xp}</p>
-                         <p>Premium activo: ${user.premiumActive ? 'Sí' : 'No'}</p>`;
+                         <p>Premium activo: ${user.premiumActive ? 'Sí' : 'No'}</p>
+                         <p>Código de referido: ${user.refCode}</p>
+                         <p>Comparte tu enlace: <span style="color:#00c896">${location.href}?ref=${user.refCode}</span></p>`;
   }
 }
 
@@ -265,4 +306,4 @@ function backToDashboard(){
 }
 </script>
 </body>
-  </html>
+    </html>
