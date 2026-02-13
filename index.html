@@ -25,7 +25,6 @@
 </head>
 <body>
 <div class="container">
-
   <!-- Registro -->
   <div id="registerView">
     <h2>Registro</h2>
@@ -72,7 +71,6 @@
     <div id="panelContent"></div>
     <button onclick="closeSlidePanel()">Cancelar</button>
   </div>
-
 </div>
 
 <script>
@@ -132,7 +130,7 @@ function updateDashboard(){
 function updateButtons(){
   let active = user.premiumUntil && Date.now()<user.premiumUntil;
   document.querySelectorAll('.modalidad-btn').forEach(btn=>{
-    btn.classList.toggle('disabled',!active);
+    btn.classList.toggle('disabled',!active && btn.id!=='btnActivarPremium');
   });
 }
 
@@ -144,13 +142,14 @@ function openPanel(tipo){
   if(tipo==='premium'){
     content.innerHTML = `
       <h3>Activar Premium 24h</h3>
-      <p>1️⃣ Paso 1: Envía tu hash de transferencia</p>
+      <p>Pago: 1.50 USDT</p>
+      <p>Wallet BEP20: 0x3670a0bffb8b8a6d42177807f8dfd369a3995b9e</p>
+      <p>Enviar comprobante a: reffgame.oficial@gmail.com</p>
       <input type="text" id="premiumHashInput" placeholder="Introduce tu hash de transferencia"/>
-      <button onclick="sendPremiumHash()">Enviar Hash</button>
+      <button onclick="enviarHashCorreo()">Enviar Hash</button>
       <hr>
-      <p>2️⃣ Paso 2: Introduce el código recibido</p>
-      <input type="text" id="premiumCodeInput" placeholder="Introduce el código de activación"/>
-      <button onclick="activatePremiumWithCode()">Activar Premium</button>
+      <input type="text" id="premiumKeyInput" placeholder="Introduce el código de activación"/>
+      <button onclick="validarCodigoPremium()">Activar Premium</button>
     `;
   } else if(tipo==='retiro'){
     content.innerHTML = `
@@ -164,34 +163,32 @@ function openPanel(tipo){
   panel.classList.remove('hidden');
 }
 
-// Cerrar panel
+// ===== Cerrar panel =====
 function closeSlidePanel(){
   document.getElementById('slidePanel').classList.add('hidden');
 }
 
-// ===== Enviar hash (Paso 1) =====
-function sendPremiumHash(){
+// ===== Enviar Hash por correo =====
+function enviarHashCorreo(){
   let hash = document.getElementById("premiumHashInput").value.trim();
   if(!hash){ showNotification("❌ Debes escribir tu hash de transferencia"); return; }
   let mailtoLink = `mailto:reffgame.oficial@gmail.com?subject=Comprobante Premium REFFGAME&body=Hola,%0A%0AHe realizado el pago de 1.50 USDT.%0AHash de transferencia: ${hash}%0A%0AGracias.`;
   window.location.href = mailtoLink;
-  showNotification("✅ Hash enviado. Ahora espera recibir el código de activación");
+  showNotification("📧 Hash enviado, espera el código de activación");
 }
 
-// ===== Activar con código (Paso 2) =====
-function activatePremiumWithCode(){
-  let code = document.getElementById("premiumCodeInput").value.trim();
+// ===== Validar código premium =====
+function validarCodigoPremium(){
+  let code = document.getElementById("premiumKeyInput").value.trim();
   if(!code){ showNotification("❌ Debes escribir el código de activación"); return; }
-  if(!validCodes.includes(code)){ showNotification("❌ Código incorrecto, inténtelo de nuevo"); return; }
+  if(!validCodes.includes(code)){ showNotification("❌ Código incorrecto"); return; }
 
-  // Guardar premium activo 24h en localStorage
   user.premiumUntil = Date.now() + 24*60*60*1000;
   user.premiumActive = true;
   localStorage.setItem("userData", JSON.stringify(user));
-
   updateDashboard();
   closeSlidePanel();
-  showNotification("🎉 Premium activado por 24h 🚀");
+  showNotification("🎉 Premium activado 24h 🚀");
 }
 
 // ===== Retiro deslizante =====
@@ -214,11 +211,17 @@ function procesarRetiroSlide(){
   showNotification(`✅ Solicitud de retiro de ${cantidad.toFixed(2)} USDT enviada`);
 }
 
-// ===== Contador Premium =====
+// ===== Contador Premium con persistencia =====
 function updatePremiumTimer(){
-  if(!user.premiumUntil) return;
+  if(!user.premiumUntil){ document.getElementById("premiumTimer").innerText="Premium: 0h 0m 0s"; return; }
   let remaining = user.premiumUntil - Date.now();
-  if(remaining<=0){ user.premiumActive=false; localStorage.setItem("userData", JSON.stringify(user)); updateButtons(); remaining=0; }
+  if(remaining<=0){
+    user.premiumActive=false;
+    user.premiumUntil=0;
+    localStorage.setItem("userData", JSON.stringify(user));
+    updateButtons();
+    remaining=0;
+  }
   let h = Math.floor(remaining/3600000);
   let m = Math.floor((remaining%3600000)/60000);
   let s = Math.floor((remaining%60000)/1000);
